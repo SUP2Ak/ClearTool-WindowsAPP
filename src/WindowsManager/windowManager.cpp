@@ -1,56 +1,91 @@
 #include "windowManager.h"
+#include "../WindowsItems/WindowItems.h"
+#include "../WindowsStyles/WindowStyles.h"
 
-/**
- * @param hwnd Handle to the window.
- * @param uMsg The message.
- * @param wParam Additional message information.
- * @param lParam Additional message information.
- * @return The result of the message processing and depends on the message sent.
+/** 
+ * @brief The WindowProc object
+ * @param hwnd 
+ * @param uMsg 
+ * @param wParam 
+ * @param lParam 
+ * @return LRESULT 
 */
-LRESULT CALLBACK WindowManager::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-    switch (uMsg) {
-    case WM_DESTROY:
-        PostQuitMessage(0); // Posts a quit message to the thread's message queue.
+LRESULT CALLBACK WindowManager::WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg)
+    {
+    case WM_CREATE:
+        WindowItems::createButton(hwnd);
+        return 0;
+
+    case WM_DRAWITEM:
+    {
+        LPDRAWITEMSTRUCT dis = (LPDRAWITEMSTRUCT)lParam;
+        if (dis->CtlType == ODT_BUTTON) {
+            WindowItems::drawButton(dis);
+        }
+        return TRUE;
+    }
+
+    case WM_PAINT: {
+        PAINTSTRUCT ps;
+        HDC hdc = BeginPaint(hwnd, &ps);
+        HBRUSH hBrush = CreateSolidBrush(RGB(30, 30, 30));
+        FillRect(hdc, &ps.rcPaint, hBrush);
+        DeleteObject(hBrush);
+        EndPaint(hwnd, &ps);
         return 0;
     }
+
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        return 0;
+    }
+
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
-/**
- * @param hInstance Handle to the current instance of the application.
- * @param nCmdShow Controls how the window is to be shown.
- * @return The exit code of the application.
+/** 
+ * @brief The run object
+ * @param hInstance 
+ * @param nCmdShow 
+ * @return int 
 */
-int WindowManager::run(HINSTANCE hInstance, int nCmdShow) {
-    const wchar_t CLASS_NAME[]  = L"Sample Window Class";
+int WindowManager::run(HINSTANCE hInstance, int nCmdShow)
+{
+    WindowStyles::setDarkTheme(NULL);
 
-    WNDCLASSW wc = { }; // Contains the window class attributes.
-    wc.lpfnWndProc   = WindowProc; // Pointer to the window procedure.
-    wc.hInstance     = hInstance; // Handle to the instance that contains the window procedure for the class.
-    wc.lpszClassName = CLASS_NAME; // Pointer to a null-terminated string or an atom that specifies the class name.
+    const wchar_t CLASS_NAME[] = L"Sample Window Class";
+
+    WNDCLASSW wc = {};
+    wc.lpfnWndProc = WindowProc;
+    wc.hInstance = hInstance;
+    wc.lpszClassName = CLASS_NAME;
 
     RegisterClassW(&wc);
 
     HWND hwnd = CreateWindowExW(
-        0, // Optional window styles.
-        CLASS_NAME, // Window class.
-        L"ClearTool \u00A9 SUP2Ak", // Window title. (©)
-        WS_OVERLAPPEDWINDOW, // Window style.
-        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, // Size and position.
-        NULL, NULL, hInstance, NULL // No parent window, no menu, no additional data.
+        WS_EX_LAYERED | WS_EX_COMPOSITED,
+        CLASS_NAME,
+        L"ClearTool \u00A9 SUP2Ak",
+        WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+        NULL, NULL, hInstance, NULL
     );
 
-    if (hwnd == NULL) {
+    if (hwnd == NULL)
+    {
         return 0;
     }
 
-    // SetWindowTextW(hwnd, L"ClearTool \u00A9 SUP2Ak"); // Set the window title. (©)
-    ShowWindow(hwnd, nCmdShow); // Show the window.
+    WindowStyles::setLayeredAttributes(hwnd);
+    ShowWindow(hwnd, nCmdShow);
 
-    MSG msg = { }; // Contains message information from a thread's message queue.
-    while (GetMessage(&msg, NULL, 0, 0)) {
-        TranslateMessage(&msg); // Translates virtual-key messages into character messages.
-        DispatchMessage(&msg); // Dispatches a message to a window procedure.
+    MSG msg = {};
+    while (GetMessage(&msg, NULL, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
     }
 
     return 0;
