@@ -20,7 +20,7 @@ for /R %%f in (*.cpp) do (
 )
 
 :: Compiler tous les fichiers trouvés et ajouter le chemin d'inclusion pour les fichiers d'en-tête
-cl.exe /Zi /EHsc /I "src/WindowsManager" /Fe:build/Debug/main.exe %files% /link /verbose /out:build/Debug/main.exe user32.lib
+cl.exe /Zi /EHsc /I "src/WindowsManager" /Fe:build/Debug/main.exe %files% /link /verbose /out:build/Debug/main.exe user32.lib comctl32.lib gdi32.lib uxtheme.lib
 
 :: Vérifier si le fichier main.exe a été généré
 if exist build/Debug/main.exe (
